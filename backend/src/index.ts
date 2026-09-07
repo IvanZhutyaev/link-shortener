@@ -1,17 +1,9 @@
-import express from "express";
-import cors from "cors";
 import { config } from "./config/env";
 import { closeRedis, connectRedis } from "./cache/redis";
 import { closeDatabase, connectDatabase } from "./db/pool";
+import { createApp } from "./app";
 
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
-app.get("/health", (_req, res) => {
-  res.json({ status: "ok" });
-});
+const app = createApp();
 
 async function start(): Promise<void> {
   await connectDatabase();
