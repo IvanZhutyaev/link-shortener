@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import { config } from "./config/env";
+import { closeRedis, connectRedis } from "./cache/redis";
 import { closeDatabase, connectDatabase } from "./db/pool";
 
 const app = express();
@@ -16,12 +17,16 @@ async function start(): Promise<void> {
   await connectDatabase();
   console.log("PostgreSQL connected, urls table is ready");
 
+  await connectRedis();
+  console.log("Redis connected");
+
   const server = app.listen(config.port, () => {
     console.log(`Server is running on port ${config.port}`);
   });
 
   const shutdown = async (): Promise<void> => {
     server.close();
+    await closeRedis();
     await closeDatabase();
   };
 
