@@ -12,11 +12,18 @@ export interface StatsResponse {
   createdAt: string;
 }
 
+interface ApiErrorBody {
+  error?: string | { message: string; statusCode: number };
+}
+
 async function readErrorMessage(response: Response): Promise<string> {
   try {
-    const data = (await response.json()) as { error?: string };
-    if (data.error) {
+    const data = (await response.json()) as ApiErrorBody;
+    if (typeof data.error === "string" && data.error.length > 0) {
       return data.error;
+    }
+    if (data.error && typeof data.error === "object" && data.error.message) {
+      return data.error.message;
     }
   } catch {
     // Response was not JSON; fall through to a generic message.

@@ -1,4 +1,4 @@
-import { InvalidUrlError } from "../types/errors";
+import { CyclicRedirectError, InvalidUrlError } from "../types/errors";
 
 /**
  * Accepts only absolute http/https URLs.
@@ -19,4 +19,17 @@ export function normalizeHttpUrl(value: string): string {
   }
 
   return trimmed;
+}
+
+/**
+ * Blocks destinations on the same host as this service.
+ * Otherwise GET /:shortCode could redirect to another short code and loop.
+ */
+export function assertNotCyclicRedirect(originalUrl: string, baseUrl: string): void {
+  const target = new URL(originalUrl);
+  const base = new URL(baseUrl);
+
+  if (target.hostname === base.hostname && target.port === base.port) {
+    throw new CyclicRedirectError();
+  }
 }

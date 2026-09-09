@@ -3,7 +3,7 @@ import { DuplicateShortCodeError, UrlRepository } from "../repositories/url.repo
 import { ShortCodeGenerationError, UrlNotFoundError } from "../types/errors";
 import { ShortenResult, UrlRecord, UrlStats } from "../types/url";
 import { generateShortCode } from "../utils/short-code";
-import { normalizeHttpUrl } from "../utils/url";
+import { assertNotCyclicRedirect, normalizeHttpUrl } from "../utils/url";
 
 const MAX_CODE_ATTEMPTS = 5;
 
@@ -16,6 +16,7 @@ export class UrlService {
 
   async shorten(originalUrl: string): Promise<ShortenResult> {
     const normalizedUrl = normalizeHttpUrl(originalUrl);
+    assertNotCyclicRedirect(normalizedUrl, this.baseUrl);
     const record = await this.createWithUniqueCode(normalizedUrl);
 
     return {

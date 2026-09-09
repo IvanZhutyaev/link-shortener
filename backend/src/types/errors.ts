@@ -5,6 +5,15 @@ export class InvalidUrlError extends Error {
   }
 }
 
+export class CyclicRedirectError extends Error {
+  constructor(
+    message = "URL points to this service and would create a redirect loop"
+  ) {
+    super(message);
+    this.name = "CyclicRedirectError";
+  }
+}
+
 export class UrlNotFoundError extends Error {
   constructor(shortCode: string) {
     super(`Short code not found: ${shortCode}`);

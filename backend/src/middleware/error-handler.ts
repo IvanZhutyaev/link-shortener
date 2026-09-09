@@ -1,39 +1,53 @@
 import { NextFunction, Request, Response } from "express";
 import {
+  CyclicRedirectError,
   InvalidUrlError,
   ShortCodeGenerationError,
   UrlNotFoundError,
 } from "../types/errors";
-
-interface ErrorBody {
-  error: string;
-}
+import { ApiErrorBody, apiError } from "../types/http";
 
 /**
- * Maps domain errors to HTTP status codes from the assignment:
- * invalid URL -> 400, missing code -> 404, generation failure -> 500.
+ * Every failed response uses { error: { message, statusCode } }.
  */
 export function errorHandler(
   error: unknown,
   _req: Request,
-  res: Response<ErrorBody>,
+  res: Response<ApiErrorBody>,
   _next: NextFunction
 ): void {
-  if (error instanceof InvalidUrlError) {
-    res.status(400).json({ error: error.message });
+  if (isJsonParseError(error)) {
+    res.status(400).json(apiError(400, "Invalid JSON body"));
+    return;
+  }
+
+  if (error instanceof InvalidUrlError || error instanceof CyclicRedirectError) {
+    res.status(400).json(apiError(400, error.message));
     return;
   }
 
   if (error instanceof UrlNotFoundError) {
-    res.status(404).json({ error: error.message });
+    res.status(404).json(apiError(404, error.message));
     return;
   }
 
   if (error instanceof ShortCodeGenerationError) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json(apiError(500, error.message));
     return;
   }
 
   console.error("Unhandled error", error);
-  res.status(500).json({ error: "Internal server error" });
+  res.status(500).json(apiError(500, "Internal server error"));
+}
+
+export function notFoundHandler(req: Request, res: Response<ApiErrorBody>): void {
+  res.status(404).json(apiError(404, `Route not found: ${req.method} ${req.path}`));
+}
+
+function isJsonParseError(error: unknown): boolean {
+  return (
+    error instanceof SyntaxError &&
+    "status" in error &&
+    (error as { status?: number }).status === 400
+  );
 }

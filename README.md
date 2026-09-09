@@ -9,6 +9,8 @@ MVP сервиса сокращения ссылок с базовой анал�
 - Cache: Redis
 - Frontend: React, TypeScript, Vite
 - Infrastructure: Docker Compose, Nginx (раздача собранного фронтенда)
+- Tests: Jest, Supertest
+- Logging: morgan
 
 ## Переменные окружения
 
@@ -127,9 +129,30 @@ curl http://localhost:3000/health
 
 ## Ошибки API
 
+Все ошибки возвращаются в одном формате:
+
+```json
+{
+  "error": {
+    "message": "Invalid URL. Expected a valid HTTP or HTTPS address",
+    "statusCode": 400
+  }
+}
+```
+
 - невалидный URL → `400`
-- короткий код не найден → `404`
+- циклический редирект (ссылка на этот же сервис) → `400`
+- короткий код или маршрут не найден → `404`
 - не удалось сгенерировать уникальный код → `500`
+
+## Тесты
+
+```bash
+cd backend
+npm test
+```
+
+Jest + Supertest покрывают сокращение ссылки, редирект, статистику, кеш HIT/MISS на уровне сервиса, защиту от циклов и единый формат ошибок.
 
 ## Структура проекта
 
